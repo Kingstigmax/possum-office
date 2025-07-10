@@ -60,6 +60,44 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Chat message handler
+  socket.on('chat:message', (data) => {
+    console.log(`Chat from ${socket.id} to ${data.to}: ${data.message}`);
+    
+    // Send to specific user
+    io.to(data.to).emit('chat:message', {
+      from: socket.id,
+      message: data.message,
+      timestamp: new Date()
+    });
+    
+    // Also send back to sender for confirmation
+    socket.emit('chat:message', {
+      from: socket.id,
+      to: data.to,
+      message: data.message,
+      timestamp: new Date(),
+      own: true
+    });
+  });
+
+  // Typing indicator
+  socket.on('chat:typing', (data) => {
+    io.to(data.to).emit('chat:typing', {
+      from: socket.id,
+      isTyping: data.isTyping
+    });
+  });
+
+  // Request to start chat
+  socket.on('chat:request', (data) => {
+    const fromUser = users.get(socket.id);
+    io.to(data.to).emit('chat:request', {
+      from: socket.id,
+      fromName: fromUser?.name || 'Someone'
+    });
+  });
+
   // Handle disconnect
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
