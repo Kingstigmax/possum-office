@@ -39,6 +39,14 @@ io.on('connection', (socket) => {
     
     // Broadcast new user to others
     socket.broadcast.emit('user:joined', users.get(socket.id));
+    
+    // Broadcast activity notification to all users
+    io.emit('office:activity', {
+      type: 'join',
+      userName: userData.name,
+      timestamp: new Date(),
+      message: `${userData.name} entered the office`
+    });
   });
 
   // Handle position updates
@@ -89,6 +97,18 @@ io.on('connection', (socket) => {
   // Handle disconnect
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+    const user = users.get(socket.id);
+    
+    if (user) {
+      // Broadcast activity notification to all users
+      io.emit('office:activity', {
+        type: 'leave',
+        userName: user.name,
+        timestamp: new Date(),
+        message: `${user.name} left the office`
+      });
+    }
+    
     users.delete(socket.id);
     socket.broadcast.emit('user:left', socket.id);
   });
