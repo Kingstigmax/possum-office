@@ -60,41 +60,29 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Chat message handler
+  // Global chat message handler
   socket.on('chat:message', (data) => {
-    console.log(`Chat from ${socket.id} to ${data.to}: ${data.message}`);
-    
-    // Send to specific user
-    io.to(data.to).emit('chat:message', {
+    const user = users.get(socket.id);
+    const messageData = {
       from: socket.id,
+      fromName: data.fromName || user?.name || 'Anonymous',
       message: data.message,
       timestamp: new Date()
-    });
+    };
     
-    // Also send back to sender for confirmation
-    socket.emit('chat:message', {
-      from: socket.id,
-      to: data.to,
-      message: data.message,
-      timestamp: new Date(),
-      own: true
-    });
+    console.log(`Global chat from ${messageData.fromName} (${socket.id}): ${data.message}`);
+    
+    // Broadcast to ALL connected users (including sender)
+    io.emit('chat:message', messageData);
   });
 
-  // Typing indicator
+  // Global typing indicator (optional future feature)
   socket.on('chat:typing', (data) => {
-    io.to(data.to).emit('chat:typing', {
+    const user = users.get(socket.id);
+    socket.broadcast.emit('chat:typing', {
       from: socket.id,
+      fromName: user?.name || 'Someone',
       isTyping: data.isTyping
-    });
-  });
-
-  // Request to start chat
-  socket.on('chat:request', (data) => {
-    const fromUser = users.get(socket.id);
-    io.to(data.to).emit('chat:request', {
-      from: socket.id,
-      fromName: fromUser?.name || 'Someone'
     });
   });
 
