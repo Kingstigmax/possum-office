@@ -111,6 +111,12 @@ io.on('connection', (socket) => {
         voiceEnabled: data.enabled
       });
       
+      // Send confirmation back to sender
+      socket.emit('voice:status-updated', {
+        socketId: socket.id,
+        voiceEnabled: data.enabled
+      });
+      
       console.log('Voice status changed:', user.name, data.enabled ? 'enabled' : 'disabled');
     }
   });
@@ -120,8 +126,8 @@ io.on('connection', (socket) => {
     const { to, offer } = data;
     console.log('Forwarding voice offer from', socket.id, 'to', to);
     
-    // Forward offer to target user
-    socket.to(to).emit('voice:offer', {
+    // Forward offer to target user by their socket ID
+    io.to(to).emit('voice:offer', {
       from: socket.id,
       offer: offer
     });
@@ -132,8 +138,8 @@ io.on('connection', (socket) => {
     const { to, answer } = data;
     console.log('Forwarding voice answer from', socket.id, 'to', to);
     
-    // Forward answer to target user
-    socket.to(to).emit('voice:answer', {
+    // Forward answer to target user by their socket ID
+    io.to(to).emit('voice:answer', {
       from: socket.id,
       answer: answer
     });
@@ -144,8 +150,8 @@ io.on('connection', (socket) => {
     const { to, candidate } = data;
     console.log('Forwarding ICE candidate from', socket.id, 'to', to);
     
-    // Forward ICE candidate to target user
-    socket.to(to).emit('voice:ice-candidate', {
+    // Forward ICE candidate to target user by their socket ID
+    io.to(to).emit('voice:ice-candidate', {
       from: socket.id,
       candidate: candidate
     });
