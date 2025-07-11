@@ -37,6 +37,14 @@ io.on('connection', (socket) => {
     // Broadcast new user to all other users
     socket.broadcast.emit('user:joined', users.get(socket.id));
     
+    // Broadcast office activity to all users
+    io.emit('office:activity', {
+      type: 'join',
+      userName: userData.name,
+      timestamp: new Date(),
+      message: `${userData.name} entered the office`
+    });
+    
     console.log('User joined:', userData.name);
   });
 
@@ -77,11 +85,10 @@ io.on('connection', (socket) => {
     const user = users.get(socket.id);
     if (user) {
       const message = {
-        id: Date.now() + Math.random(),
-        user: user.name,
+        from: socket.id,
+        fromName: user.name,
         message: messageData.message,
-        timestamp: new Date().toISOString(),
-        socketId: socket.id
+        timestamp: new Date()
       };
       
       // Broadcast to all users (global chat)
@@ -149,6 +156,14 @@ io.on('connection', (socket) => {
     const user = users.get(socket.id);
     if (user) {
       console.log('User disconnected:', user.name);
+      
+      // Broadcast office activity to all users
+      io.emit('office:activity', {
+        type: 'leave',
+        userName: user.name,
+        timestamp: new Date(),
+        message: `${user.name} left the office`
+      });
       
       // Remove user from users map
       users.delete(socket.id);
