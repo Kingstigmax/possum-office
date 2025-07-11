@@ -157,6 +157,112 @@ io.on('connection', (socket) => {
     });
   });
 
+  // Video WebRTC signaling events
+  
+  // Video huddle invitation
+  socket.on('video:invite', (data) => {
+    const { to } = data;
+    const user = users.get(socket.id);
+    
+    if (user) {
+      console.log('Video huddle invitation from', user.name, 'to', to);
+      
+      // Forward invitation to target user
+      io.to(to).emit('video:invite', {
+        from: socket.id,
+        fromName: user.name,
+        timestamp: new Date()
+      });
+    }
+  });
+
+  // Video huddle acceptance
+  socket.on('video:accept', (data) => {
+    const { to } = data;
+    const user = users.get(socket.id);
+    
+    if (user) {
+      console.log('Video huddle accepted by', user.name, 'with', to);
+      
+      // Notify the original inviter
+      io.to(to).emit('video:accepted', {
+        from: socket.id,
+        fromName: user.name,
+        timestamp: new Date()
+      });
+    }
+  });
+
+  // Video huddle rejection
+  socket.on('video:reject', (data) => {
+    const { to } = data;
+    const user = users.get(socket.id);
+    
+    if (user) {
+      console.log('Video huddle rejected by', user.name, 'with', to);
+      
+      // Notify the original inviter
+      io.to(to).emit('video:rejected', {
+        from: socket.id,
+        fromName: user.name,
+        timestamp: new Date()
+      });
+    }
+  });
+
+  // Video WebRTC signaling - Video offer
+  socket.on('video:offer', (data) => {
+    const { to, offer } = data;
+    console.log('Forwarding video offer from', socket.id, 'to', to);
+    
+    // Forward offer to target user by their socket ID
+    io.to(to).emit('video:offer', {
+      from: socket.id,
+      offer: offer
+    });
+  });
+
+  // Video WebRTC signaling - Video answer
+  socket.on('video:answer', (data) => {
+    const { to, answer } = data;
+    console.log('Forwarding video answer from', socket.id, 'to', to);
+    
+    // Forward answer to target user by their socket ID
+    io.to(to).emit('video:answer', {
+      from: socket.id,
+      answer: answer
+    });
+  });
+
+  // Video WebRTC signaling - Video ICE candidate
+  socket.on('video:ice-candidate', (data) => {
+    const { to, candidate } = data;
+    console.log('Forwarding video ICE candidate from', socket.id, 'to', to);
+    
+    // Forward ICE candidate to target user by their socket ID
+    io.to(to).emit('video:ice-candidate', {
+      from: socket.id,
+      candidate: candidate
+    });
+  });
+
+  // Video huddle end
+  socket.on('video:end', (data) => {
+    const { to } = data;
+    const user = users.get(socket.id);
+    
+    if (user) {
+      console.log('Video huddle ended by', user.name, 'with', to);
+      
+      // Notify the other user
+      io.to(to).emit('video:ended', {
+        from: socket.id,
+        fromName: user.name,
+        timestamp: new Date()
+      });
+    }
+  });
+
   // Handle user disconnect
   socket.on('disconnect', () => {
     const user = users.get(socket.id);
